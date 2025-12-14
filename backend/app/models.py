@@ -1,7 +1,8 @@
 import uuid
+from datetime import datetime
 
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, Column, JSON
 
 
 # Shared properties
@@ -111,3 +112,84 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
+
+
+# Wildberries Token models
+class WBTokenBase(SQLModel):
+    """Base model for Wildberries API tokens"""
+
+    name: str = Field(
+        max_length=100, description="Token name, e.g., Production Main Token"
+    )
+    environment: str = Field(
+        default="production", description="Environment: production or sandbox"
+    )
+    is_active: bool = Field(default=True, description="Whether this token is active")
+
+
+class WBTokenCreate(WBTokenBase):
+    """Model for creating a new WB token"""
+
+    token: str = Field(description="Wildberries API token value")
+
+
+class WBTokenUpdate(SQLModel):
+    """Model for updating a WB token"""
+
+    name: str | None = Field(default=None, max_length=100)
+    is_active: bool | None = None
+
+
+class WBToken(WBTokenBase, table=True):
+    """Database model for WB tokens"""
+
+    __tablename__ = "wb_token"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+
+    # Encrypted token value (never expose in API responses)
+    token_encrypted: str = Field(description="Encrypted token value")
+
+    # Seller information (fetched from WB API)
+    seller_id: str | None = Field(default=None, description="Seller ID (sid)")
+    seller_name: str | None = Field(default=None, max_length=255)
+    trade_mark: str | None = Field(default=None, max_length=255)
+
+    # Token validation status
+    is_valid: bool | None = Field(default=None)
+    last_validated_at: datetime | None = Field(default=None)
+    validation_error: str | None = Field(default=None)
+
+    # Usage statistics
+    total_requests: int = Field(default=0)
+    failed_requests: int = Field(default=0)
+    last_used_at: datetime | None = Field(default=None)
+
+    # Timestamps
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class WBTokenPublic(WBTokenBase):
+    """Public model for WB tokens (excludes sensitive token value)"""
+
+    id: uuid.UUID
+    seller_id: str | None
+    seller_name: str | None
+    trade_mark: str | None
+
+    is_valid: bool | None
+    last_validated_at: datetime | None
+
+    total_requests: int
+    failed_requests: int
+    last_used_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class WBTokensPublic(SQLModel):
+    """Model for returning a list of WB tokens"""
+
+    data: list[WBTokenPublic]
+    count: int
