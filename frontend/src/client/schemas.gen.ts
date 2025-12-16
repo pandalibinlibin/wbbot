@@ -524,3 +524,204 @@ export const ValidationErrorSchema = {
     required: ['loc', 'msg', 'type'],
     title: 'ValidationError'
 } as const;
+
+export const WBTokenCreateSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Name',
+            description: 'Token name, e.g., Production Main Token'
+        },
+        environment: {
+            type: 'string',
+            title: 'Environment',
+            description: 'Environment: production or sandbox',
+            default: 'production'
+        },
+        is_active: {
+            type: 'boolean',
+            title: 'Is Active',
+            description: 'Whether this token is active',
+            default: true
+        },
+        token: {
+            type: 'string',
+            title: 'Token',
+            description: 'Wildberries API token value'
+        }
+    },
+    type: 'object',
+    required: ['name', 'token'],
+    title: 'WBTokenCreate',
+    description: 'Model for creating a new WB token'
+} as const;
+
+export const WBTokenPublicSchema = {
+    properties: {
+        name: {
+            type: 'string',
+            maxLength: 100,
+            title: 'Name',
+            description: 'Token name, e.g., Production Main Token'
+        },
+        environment: {
+            type: 'string',
+            title: 'Environment',
+            description: 'Environment: production or sandbox',
+            default: 'production'
+        },
+        is_active: {
+            type: 'boolean',
+            title: 'Is Active',
+            description: 'Whether this token is active',
+            default: true
+        },
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        seller_id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Seller Id'
+        },
+        seller_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Seller Name'
+        },
+        trade_mark: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Trade Mark'
+        },
+        is_valid: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Is Valid'
+        },
+        last_validated_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Validated At'
+        },
+        total_requests: {
+            type: 'integer',
+            title: 'Total Requests'
+        },
+        failed_requests: {
+            type: 'integer',
+            title: 'Failed Requests'
+        },
+        last_used_at: {
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Last Used At'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        updated_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Updated At'
+        }
+    },
+    type: 'object',
+    required: ['name', 'id', 'seller_id', 'seller_name', 'trade_mark', 'is_valid', 'last_validated_at', 'total_requests', 'failed_requests', 'last_used_at', 'created_at', 'updated_at'],
+    title: 'WBTokenPublic',
+    description: 'Public model for WB tokens (excludes sensitive token value)'
+} as const;
+
+export const WBTokenUpdateSchema = {
+    properties: {
+        name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 100
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Name'
+        },
+        is_active: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Is Active'
+        }
+    },
+    type: 'object',
+    title: 'WBTokenUpdate',
+    description: 'Model for updating a WB token'
+} as const;
+
+export const WBTokensPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/WBTokenPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'WBTokensPublic',
+    description: 'Model for returning a list of WB tokens'
+} as const;

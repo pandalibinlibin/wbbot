@@ -1,5 +1,6 @@
 """API routes for Wildberries Token management."""
 
+import logging
 from typing import Any
 from uuid import UUID
 
@@ -32,12 +33,23 @@ async def create_wb_token(
 
     Validate the token with Wildberries API and store it.
     """
-    result = await WBTokenService.create_token(session, token_in)
-
-    if not result["success"]:
+    logging.info(f"Creating WB token with data: {token_in}")
+    
+    try:
+        result = await WBTokenService.create_token(session, token_in)
+        logging.info(f"WB token creation result: {result}")
+        
+        if not result["success"]:
+            logging.error(f"WB token creation failed: {result['error']}")
+            raise HTTPException(
+                status_code=400,
+                detail=result["error"],
+            )
+    except Exception as e:
+        logging.error(f"Exception during WB token creation: {str(e)}")
         raise HTTPException(
             status_code=400,
-            detail=result["error"],
+            detail=f"Failed to create token: {str(e)}",
         )
 
     return result["token"]

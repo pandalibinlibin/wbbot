@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, WbTokensCreateWbTokenData, WbTokensCreateWbTokenResponse, WbTokensReadWbTokensData, WbTokensReadWbTokensResponse, WbTokensReadWbTokenData, WbTokensReadWbTokenResponse, WbTokensUpdateWbTokenData, WbTokensUpdateWbTokenResponse, WbTokensDeleteWbTokenData, WbTokensDeleteWbTokenResponse } from './types.gen';
 
 export class ItemsService {
     /**
@@ -463,6 +463,119 @@ export class UtilsService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/utils/health-check/'
+        });
+    }
+}
+
+export class WbTokensService {
+    /**
+     * Create Wb Token
+     * Create a new WB token.
+     *
+     * Validate the token with Wildberries API and store it.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns WBTokenPublic Successful Response
+     * @throws ApiError
+     */
+    public static createWbToken(data: WbTokensCreateWbTokenData): CancelablePromise<WbTokensCreateWbTokenResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/wb-tokens/',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Wb Tokens
+     * Retrieve WB tokens.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns WBTokensPublic Successful Response
+     * @throws ApiError
+     */
+    public static readWbTokens(data: WbTokensReadWbTokensData = {}): CancelablePromise<WbTokensReadWbTokensResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/wb-tokens/',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Wb Token
+     * Get WB token by ID.
+     * @param data The data for the request.
+     * @param data.tokenId
+     * @returns WBTokenPublic Successful Response
+     * @throws ApiError
+     */
+    public static readWbToken(data: WbTokensReadWbTokenData): CancelablePromise<WbTokensReadWbTokenResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/wb-tokens/{token_id}',
+            path: {
+                token_id: data.tokenId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Wb Token
+     * Update a WB token.
+     * @param data The data for the request.
+     * @param data.tokenId
+     * @param data.requestBody
+     * @returns WBTokenPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateWbToken(data: WbTokensUpdateWbTokenData): CancelablePromise<WbTokensUpdateWbTokenResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/wb-tokens/{token_id}',
+            path: {
+                token_id: data.tokenId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Wb Token
+     * Delete a WB token.
+     * @param data The data for the request.
+     * @param data.tokenId
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static deleteWbToken(data: WbTokensDeleteWbTokenData): CancelablePromise<WbTokensDeleteWbTokenResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/wb-tokens/{token_id}',
+            path: {
+                token_id: data.tokenId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
         });
     }
 }

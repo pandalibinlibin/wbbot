@@ -107,6 +107,73 @@ export type ValidationError = {
     type: string;
 };
 
+/**
+ * Model for creating a new WB token
+ */
+export type WBTokenCreate = {
+    /**
+     * Token name, e.g., Production Main Token
+     */
+    name: string;
+    /**
+     * Environment: production or sandbox
+     */
+    environment?: string;
+    /**
+     * Whether this token is active
+     */
+    is_active?: boolean;
+    /**
+     * Wildberries API token value
+     */
+    token: string;
+};
+
+/**
+ * Public model for WB tokens (excludes sensitive token value)
+ */
+export type WBTokenPublic = {
+    /**
+     * Token name, e.g., Production Main Token
+     */
+    name: string;
+    /**
+     * Environment: production or sandbox
+     */
+    environment?: string;
+    /**
+     * Whether this token is active
+     */
+    is_active?: boolean;
+    id: string;
+    seller_id: (string | null);
+    seller_name: (string | null);
+    trade_mark: (string | null);
+    is_valid: (boolean | null);
+    last_validated_at: (string | null);
+    total_requests: number;
+    failed_requests: number;
+    last_used_at: (string | null);
+    created_at: string;
+    updated_at: string;
+};
+
+/**
+ * Model for returning a list of WB tokens
+ */
+export type WBTokensPublic = {
+    data: Array<WBTokenPublic>;
+    count: number;
+};
+
+/**
+ * Model for updating a WB token
+ */
+export type WBTokenUpdate = {
+    name?: (string | null);
+    is_active?: (boolean | null);
+};
+
 export type ItemsReadItemsData = {
     limit?: number;
     skip?: number;
@@ -232,3 +299,35 @@ export type UtilsTestEmailData = {
 export type UtilsTestEmailResponse = (Message);
 
 export type UtilsHealthCheckResponse = (boolean);
+
+export type WbTokensCreateWbTokenData = {
+    requestBody: WBTokenCreate;
+};
+
+export type WbTokensCreateWbTokenResponse = (WBTokenPublic);
+
+export type WbTokensReadWbTokensData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type WbTokensReadWbTokensResponse = (WBTokensPublic);
+
+export type WbTokensReadWbTokenData = {
+    tokenId: string;
+};
+
+export type WbTokensReadWbTokenResponse = (WBTokenPublic);
+
+export type WbTokensUpdateWbTokenData = {
+    requestBody: WBTokenUpdate;
+    tokenId: string;
+};
+
+export type WbTokensUpdateWbTokenResponse = (WBTokenPublic);
+
+export type WbTokensDeleteWbTokenData = {
+    tokenId: string;
+};
+
+export type WbTokensDeleteWbTokenResponse = (unknown);

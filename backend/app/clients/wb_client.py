@@ -10,7 +10,7 @@ class WBAPIClient:
     # Base URL for WB Common API (Seller Information, News, etc.)
     BASE_URL = "https://common-api.wildberries.ru"
 
-    def __init__(self, token: str, timeout: float = 30.0):
+    def __init__(self, token: str, timeout: float = 60.0):
         """
         Initialize WB API client.
 
