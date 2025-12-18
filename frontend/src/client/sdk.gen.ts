@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, WbTokensCreateWbTokenData, WbTokensCreateWbTokenResponse, WbTokensReadWbTokensData, WbTokensReadWbTokensResponse, WbTokensReadWbTokenData, WbTokensReadWbTokenResponse, WbTokensUpdateWbTokenData, WbTokensUpdateWbTokenResponse, WbTokensDeleteWbTokenData, WbTokensDeleteWbTokenResponse } from './types.gen';
+import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, ProductsGetProductsData, ProductsGetProductsResponse, ProductsGetProductsByShopData, ProductsGetProductsByShopResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, WbTokensCreateWbTokenData, WbTokensCreateWbTokenResponse, WbTokensReadWbTokensData, WbTokensReadWbTokensResponse, WbTokensReadWbTokenData, WbTokensReadWbTokenResponse, WbTokensUpdateWbTokenData, WbTokensUpdateWbTokenResponse, WbTokensDeleteWbTokenData, WbTokensDeleteWbTokenResponse } from './types.gen';
 
 export class ItemsService {
     /**
@@ -228,6 +228,60 @@ export class PrivateService {
             url: '/api/v1/private/users/',
             body: data.requestBody,
             mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
+export class ProductsService {
+    /**
+     * Get Products
+     * Get products list for a specific shop (WB Token)
+     * @param data The data for the request.
+     * @param data.tokenId WB Token ID for the shop
+     * @param data.limit Number of products to fetch
+     * @param data.offset Number of products to skip
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getProducts(data: ProductsGetProductsData): CancelablePromise<ProductsGetProductsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/products/',
+            query: {
+                token_id: data.tokenId,
+                limit: data.limit,
+                offset: data.offset
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Products By Shop
+     * Get product list for a specific shop by shop ID
+     * @param data The data for the request.
+     * @param data.shopId
+     * @param data.limit Number of products to fetch
+     * @param data.offset Number of products to skip
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getProductsByShop(data: ProductsGetProductsByShopData): CancelablePromise<ProductsGetProductsByShopResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/products/shop/{shop_id}',
+            path: {
+                shop_id: data.shopId
+            },
+            query: {
+                limit: data.limit,
+                offset: data.offset
+            },
             errors: {
                 422: 'Validation Error'
             }

@@ -176,3 +176,46 @@ class WBAPIClient:
             "error": None,
             "seller_info": seller_result["data"],
         }
+
+    async def get_product_list(
+        self, limit: int = 100, offset: int = 0
+    ) -> dict[str, Any]:
+        """
+        Get product cards list from Wildberries API
+
+        Args:
+            limit: Number of products to fetch(max 1000)
+            offset: Number of products to skip
+
+        Returns:
+            dict: API response with product list
+        """
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    "https://content-api.wildberries.ru/content/v2/get/cards/list",
+                    headers=self.headers,
+                    json={
+                        "settings": {
+                            "cursor": {"limit": limit, "offset": offset},
+                            "filter": {
+                                "withPhoto": -1  # -1: all, 0: without photo, 1: with photo
+                            },
+                        }
+                    },
+                )
+
+                if response.status_code == 200:
+                    return {"success": True, "data": response.json(), "error": None}
+                else:
+                    return {
+                        "success": False,
+                        "data": None,
+                        "error": f"HTTP {response.status_code}: {response.text}",
+                    }
+
+        except httpx.TimeoutException:
+            return {"success": False, "data": None, "error": "Request timeout"}
+
+        except Exception as e:
+            return {"success": False, "data": None, "error": str(e)}

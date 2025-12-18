@@ -7,9 +7,9 @@ import { WbTokensService } from "../../client";
 interface WBToken {
   id: string;
   name: string;
-  seller_name?: string;
-  trade_mark?: string;
-  is_active: boolean;
+  seller_name?: string | null;
+  trade_mark?: string | null;
+  is_active?: boolean;
 }
 
 // 定义组件接收的参数
@@ -41,7 +41,12 @@ export function ShopSelector({
 
         // 如果没有选中店铺且有可用店铺，自动选择第一个
         if (!selectedShopId && activeTokens.length > 0) {
-          onShopChange(activeTokens[0].id);
+          const firstShopId = activeTokens[0].id;
+          onShopChange(firstShopId);
+          // 同时更新URL参数
+          const url = new URL(window.location.href);
+          url.searchParams.set("shopId", firstShopId);
+          window.history.replaceState({}, "", url.toString());
         }
       } catch (error) {
         console.error("Failed to fetch tokens:", error);
@@ -110,6 +115,10 @@ export function ShopSelector({
               onClick={() => {
                 onShopChange(token.id);
                 setIsOpen(false);
+                // Update URL search parameter
+                const url = new URL(window.location.href);
+                url.searchParams.set("shopId", token.id);
+                window.history.replaceState({}, "", url.toString());
               }}
               className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
                 selectedShopId === token.id ? "bg-blue-50 text-blue-700" : ""

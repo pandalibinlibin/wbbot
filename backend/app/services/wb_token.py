@@ -16,19 +16,18 @@ class WBTokenService:
     @staticmethod
     def encrypt_token(token: str) -> str:
         """
-        Encrypt token for secure storage.
+        Store token (currently as plain text for development)
+        TODO: Implement proper encryption for production
 
         Args:
             token: Plain text token
 
         Returns:
-            Encrypted token string
+            Token (currently plain text)
         """
-
-        # Use password hashing as encryption (one-way)
-        # For reversible encryption, we'd need a different approach
-
-        return get_password_hash(token)
+        # For development: store as plain text
+        # TODO: Implement encryption for production deployment
+        return token
 
     @staticmethod
     async def create_token(session: Session, token_in: WBTokenCreate) -> dict[str, Any]:

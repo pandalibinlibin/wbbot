@@ -238,6 +238,41 @@ export type PrivateCreateUserData = {
 
 export type PrivateCreateUserResponse = (UserPublic);
 
+export type ProductsGetProductsData = {
+    /**
+     * Number of products to fetch
+     */
+    limit?: number;
+    /**
+     * Number of products to skip
+     */
+    offset?: number;
+    /**
+     * WB Token ID for the shop
+     */
+    tokenId: string;
+};
+
+export type ProductsGetProductsResponse = ({
+    [key: string]: unknown;
+});
+
+export type ProductsGetProductsByShopData = {
+    /**
+     * Number of products to fetch
+     */
+    limit?: number;
+    /**
+     * Number of products to skip
+     */
+    offset?: number;
+    shopId: string;
+};
+
+export type ProductsGetProductsByShopResponse = ({
+    [key: string]: unknown;
+});
+
 export type UsersReadUsersData = {
     limit?: number;
     skip?: number;

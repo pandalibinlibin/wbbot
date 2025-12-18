@@ -25,3 +25,20 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
+
+def decrypt_token(encrypted_token: str) -> str:
+    """
+    Decrypt token for API usage (currently returns plain text).
+    TODO: Implement proper decryption for production.
+
+    Args:
+        encrypted_token: Token string (currently plain text)
+
+    Returns:
+        Plain text token
+    """
+    # For development: token is stored as plain text
+    # TODO: Implement decryption for production deployment
+
+    return encrypted_token

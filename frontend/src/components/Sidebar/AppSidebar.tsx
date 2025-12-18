@@ -1,4 +1,4 @@
-import { Home, Users, Key } from "lucide-react";
+import { Home, Users, Key, Package } from "lucide-react";
 
 import { SidebarAppearance } from "@/components/Common/Appearance";
 import { LanguageSwitcher } from "@/components/Common/LanguageSwitcher";
@@ -12,17 +12,20 @@ import {
 import useAuth from "@/hooks/useAuth";
 import { type Item, Main } from "./Main";
 import { User } from "./User";
-
-const baseItems: Item[] = [
-  { icon: Home, title: "Dashboard", path: "/" },
-  { icon: Key, title: "WB Tokens", path: "/wb-tokens" },
-];
+import { useTranslation } from "react-i18next";
 
 export function AppSidebar() {
   const { user: currentUser } = useAuth();
+  const { t } = useTranslation("common");
+
+  const baseItems: Item[] = [
+    { icon: Home, title: t("dashboard"), path: "/" },
+    { icon: Package, title: t("products"), path: "/products" },
+    { icon: Key, title: t("wbTokens"), path: "/wb-tokens" },
+  ];
 
   const items = currentUser?.is_superuser
-    ? [...baseItems, { icon: Users, title: "Admin", path: "/admin" }]
+    ? [...baseItems, { icon: Users, title: t("admin"), path: "/admin" }]
     : baseItems;
 
   return (
