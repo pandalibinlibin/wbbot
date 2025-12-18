@@ -243,17 +243,47 @@ Data Layer (SQLModel + PostgreSQL)
 - **Pagination support** with offset/limit parameters
 - **Shop-specific product filtering** via tokenId
 
-#### State Management Fixes
-- **Shop selector synchronization** between UI state and URL parameters
-- **Automatic shop selection** with URL parameter updates
-- **Consistent state management** across components
+#### State Management Architecture ✅ (Enhanced 2025-12-18)
+- **Global shop state persistence** using localStorage for cross-page consistency
+- **Intelligent state synchronization** between localStorage, URL parameters, and component state
+- **Automatic state restoration** on page navigation and browser refresh
+- **Cross-tab synchronization** for consistent user experience
+- **Simplified user flow** with manual shop selection (removed problematic auto-selection)
+- **URL parameter management** with fallback mechanisms for reliable state tracking
+
+### 4. Global State Management System ✅ (2025-12-18)
+
+#### Architecture Overview
+- **Centralized state management** in Layout component (`frontend/src/routes/_layout.tsx`)
+- **Multi-layer persistence** combining localStorage, URL parameters, and React state
+- **Intelligent fallback mechanisms** ensuring state reliability across different scenarios
+
+#### Implementation Details
+- **localStorage Integration**: Persistent storage for shop selection across browser sessions
+- **URL Synchronization**: Automatic URL parameter updates for shareable links and browser navigation
+- **Component State Management**: React useState for real-time UI updates
+- **Cross-page Consistency**: Shop selection maintained during navigation between different pages
+- **Error Recovery**: Robust fallback logic when localStorage or URL parameters are unavailable
+
+#### Technical Solutions
+- **Layout Component Enhancement**: Added `useEffect` hooks for localStorage initialization and state synchronization
+- **ShopSelector Simplification**: Removed complex URL logic, focused on pure UI interaction
+- **Products Page Intelligence**: Smart state detection prioritizing localStorage over URL parameters
+- **Automatic URL Updates**: Seamless synchronization between user actions and browser state
+
+#### User Experience Improvements
+- **Persistent Shop Selection**: Once selected, shop choice remains active across all pages
+- **Intuitive User Flow**: Clear "Please select a shop" messaging when no shop is chosen
+- **Seamless Navigation**: No need to re-select shop when switching between pages
+- **Browser Refresh Resilience**: Shop selection survives page reloads and new tab openings
 
 ## Current Status Summary (2025-12-18)
 ✅ **Completed**: WB Token Management (Full CRUD + Multi-shop selector)
 ✅ **Completed**: Product Management System (List + Details + Image Management)
 ✅ **Completed**: Advanced Image Carousel with Batch Download
+✅ **Completed**: Global State Management with localStorage Persistence
 🔄 **Discussed**: ZIP compression download (technical feasibility analyzed)
 📋 **Next**: Price & Discount Management System
 
 ---
-*Last Updated: 2025-12-18 01:35 UTC-08:00*
+*Last Updated: 2025-12-18 02:21 UTC-08:00*

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { ChevronDown, Store } from "lucide-react";
-import { WbTokensService } from "../../client";
+import { useTranslation } from "react-i18next";
+import { WbTokensService } from "@/client";
 
 // 定义Token的数据结构
 interface WBToken {
@@ -29,6 +29,13 @@ export function ShopSelector({
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // 更新URL参数的辅助函数
+  const updateUrlWithShopId = (shopId: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("shopId", shopId);
+    window.history.replaceState({}, "", url.toString());
+  };
+
   // 获取可用的店铺列表
   useEffect(() => {
     const fetchTokens = async () => {
@@ -39,15 +46,8 @@ export function ShopSelector({
         );
         setTokens(activeTokens);
 
-        // 如果没有选中店铺且有可用店铺，自动选择第一个
-        if (!selectedShopId && activeTokens.length > 0) {
-          const firstShopId = activeTokens[0].id;
-          onShopChange(firstShopId);
-          // 同时更新URL参数
-          const url = new URL(window.location.href);
-          url.searchParams.set("shopId", firstShopId);
-          window.history.replaceState({}, "", url.toString());
-        }
+        // ShopSelector现在只负责UI显示，不处理URL逻辑
+        // 全局状态管理由Layout组件负责
       } catch (error) {
         console.error("Failed to fetch tokens:", error);
       } finally {
@@ -115,10 +115,8 @@ export function ShopSelector({
               onClick={() => {
                 onShopChange(token.id);
                 setIsOpen(false);
-                // Update URL search parameter
-                const url = new URL(window.location.href);
-                url.searchParams.set("shopId", token.id);
-                window.history.replaceState({}, "", url.toString());
+                // 使用TanStack Router更新URL参数
+                updateUrlWithShopId(token.id);
               }}
               className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
                 selectedShopId === token.id ? "bg-blue-50 text-blue-700" : ""

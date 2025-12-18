@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { ProductsService } from "@/client";
-import { useSearch } from "@tanstack/react-router";
 import { ProductDetailsModal } from "@/components/Products/ProductDetailsModal";
 
 export const Route = createFileRoute("/_layout/products")({
@@ -11,16 +10,47 @@ export const Route = createFileRoute("/_layout/products")({
 
 function ProductsPage() {
   const { t } = useTranslation("products");
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const [limit] = useState(10); // Products per page
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
-  const search = useSearch({ from: "/_layout/products" });
+  // 添加URL参数状态来触发重新加载
+  const [urlShopId, setUrlShopId] = useState<string>("");
+
+  // 监听全局店铺状态变化
+  useEffect(() => {
+    const checkShopId = () => {
+      // 优先从localStorage读取，其次从URL
+      const savedShopId = localStorage.getItem('selectedShopId');
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlShopId = urlParams.get('shopId') || "";
+      
+      const shopId = savedShopId || urlShopId;
+      setUrlShopId(shopId);
+      
+      // 如果localStorage有值但URL没有，更新URL
+      if (savedShopId && !urlShopId) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("shopId", savedShopId);
+        window.history.replaceState({}, "", url.toString());
+      }
+    };
+
+    // 初始检查
+    checkShopId();
+
+    // 监听localStorage变化
+    const interval = setInterval(checkShopId, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -28,28 +58,26 @@ function ProductsPage() {
         setLoading(true);
         setError(null);
 
-        // Get shop ID from search parameters
-        const tokenId = search.shopId || "";
-
-        if (!tokenId) {
+        if (!urlShopId) {
           setLoading(false);
           return;
         }
 
         const offset = (currentPage - 1) * limit;
         const response = await ProductsService.getProducts({
-          tokenId: tokenId,
+          tokenId: urlShopId,
           limit: limit,
           offset: offset,
         });
 
         if (response.success) {
-          setProducts(response.data.products);
+          const data = response.data as any;
+          setProducts(data.products || []);
           setTotalProducts(
-            response.data.cursor?.total || response.data.products.length
+            data.cursor?.total || data.products?.length || 0
           );
         } else {
-          setError(response.message || "Failed to fetch products");
+          setError((response as any).message || "Failed to fetch products");
         }
       } catch (err) {
         setError("Error fetching products");
@@ -60,7 +88,7 @@ function ProductsPage() {
     };
 
     fetchProducts();
-  }, [search.shopId, currentPage, limit]);
+  }, [urlShopId, currentPage, limit]); // 监听urlShopId变化
 
   const totalPages = Math.ceil(totalProducts / limit);
 
@@ -69,7 +97,7 @@ function ProductsPage() {
   };
 
   // Show "select shop first" message when no shop is selected
-  if (!search.shopId && !loading) {
+  if (!urlShopId && !loading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -273,7 +301,7 @@ function ProductsPage() {
       )}
 
       {/* No products */}
-      {!loading && !error && products.length === 0 && search.shopId && (
+      {!loading && !error && products.length === 0 && urlShopId && (
         <div className="text-center py-8">
           <p className="text-muted-foreground">No products found</p>
         </div>
