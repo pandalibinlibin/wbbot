@@ -193,3 +193,92 @@ class WBTokensPublic(SQLModel):
 
     data: list[WBTokenPublic]
     count: int
+
+
+# Product Cache Models - for storing WB product data locally
+class WBProductCacheBase(SQLModel):
+    """Base model for WB product cache with shared fields"""
+
+    token_id: uuid.UUID = Field(foreign_key="wb_token.id", index=True)
+    wb_product_id: int = Field(index=True)  # WB product ID for fast lookup
+    product_data: dict = Field(
+        default_factory=dict, sa_column=Column(JSON)
+    )  # Complete product JSON
+    last_updated: datetime = Field(default_factory=datetime.utcnow, index=True)
+    cache_version: int = Field(default=1)  # For cache invalidation strategy
+    is_active: bool = Field(default=True, index=True)
+
+
+class WBProductCache(WBProductCacheBase, table=True):
+    """Product cache table for storing WB product data locally"""
+
+    __tablename__ = "wb_product_cache"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class WBProductCacheCreate(WBProductCacheBase):
+    """Model for creating product cache entries"""
+
+    pass
+
+
+class WBProductCacheUpdate(SQLModel):
+    """Model for updating product cache entries"""
+
+    product_data: dict | None = None
+    last_updated: datetime | None = None
+    cache_version: int | None = None
+    is_active: bool | None = None
+
+
+class WBProductCachePublic(WBProductCacheBase):
+    """Public model for product cache (includes ID and timestamp)"""
+
+    id: uuid.UUID
+    created_at: datetime
+
+
+# Cache Sync Log Models - for tracking synchronization status
+class CacheSyncLogBase(SQLModel):
+    """Base model for cache synchronization logs"""
+
+    token_id: uuid.UUID = Field(foreign_key="wb_token.id", index=True)
+    sync_type: str = Field(max_length=50)  # "full", "incremental"
+    status: str = Field(max_length=20)  # "in_progress", "completed", "failed"
+    products_synced: int = Field(default=0)
+    error_message: str | None = Field(default=None, max_length=1000)
+
+
+class CacheSyncLog(CacheSyncLogBase, table=True):
+    """Cache synchronization log table"""
+
+    __tablename__ = "cache_sync_log"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    started_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+    completed_at: datetime | None = Field(default=None)
+
+
+class CacheSyncLogCreate(CacheSyncLogBase):
+    """Model for creating sync log entries"""
+
+    pass
+
+
+class CacheSyncLogUpdate(SQLModel):
+    """Model for updating sync log entries"""
+
+    status: str | None = None
+    products_synced: int | None = None
+    error_message: str | None = None
+    completed_at: datetime | None = None
+
+
+class CacheSyncLogPublic(CacheSyncLogBase):
+    """Public model for sync logs"""
+
+    id: uuid.UUID
+    started_at: datetime
+    completed_at: datetime | None
