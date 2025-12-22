@@ -5,6 +5,7 @@ import asyncio
 
 from sqlmodel import Session, select
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
 
 from app.models import (
     WBProductCache,
@@ -122,12 +123,15 @@ class ProductCacheService:
             )
             total_count = len(session.exec(count_statement).all())
 
-            # Get paginated products
+            # Get paginated products ordered by product update date (newest first)
+            # Use JSON field ordering to sort by product's updatedAt field
             statement = (
                 select(WBProductCache)
                 .where(WBProductCache.token_id == uuid.UUID(token_id))
                 .where(WBProductCache.is_active == True)
-                .order_by(WBProductCache.last_updated.desc())
+                .order_by(
+                    text("product_data->>'updatedAt' DESC")
+                )  # Order by product's updatedAt field
                 .offset(offset)
                 .limit(limit)
             )
@@ -183,120 +187,80 @@ class ProductCacheService:
             session.refresh(sync_log_entry)
             sync_log_id = sync_log_entry.id
 
-            # Fetch ALL products from WB API using pagination
-            all_products = []
-            offset = 0
-            api_limit = min(limit, 100)
-            total_api_calls = 0
-            max_api_calls = 10  # Safety limit to prevent infinite loops
+            # WB API LIMITATION: offset parameter doesn't work, max limit=100
+            # We can only fetch the first 100 products for any shop
+            print(
+                f"⚠️  WB API Limitation: Can only fetch max 100 products due to broken pagination"
+            )
 
-            while total_api_calls < max_api_calls:
-                # Single page retry mechanism
-                api_result = None
-                page_retry_count = 0
-                max_page_retries = 2  # Each page can retry up to 2 times
+            # Make single API call with maximum possible limit (100)
+            api_result = None
+            retry_count = 0
+            max_retries = 3
 
-                while page_retry_count <= max_page_retries:
-                    try:
-                        api_result = await ProductService.get_products_by_token_id(
-                            session=session,
-                            token_id=token_id,
-                            limit=api_limit,
-                            offset=offset,
-                        )
+            while retry_count <= max_retries:
+                try:
+                    # Force limit=100 and offset=0 since pagination doesn't work
+                    api_result = await ProductService.get_products_by_token_id(
+                        session=session,
+                        token_id=token_id,
+                        limit=100,  # WB API max limit
+                        offset=0,  # offset doesn't work anyway
+                    )
 
-                        if api_result["success"]:
-                            break  # Success, exit retry loop
-                        else:
-                            # API returned error, check if we should retry
-                            error_msg = api_result.get("error", "")
-                            if (
-                                page_retry_count < max_page_retries
-                                and ProductCacheService._should_retry_error(error_msg)
-                            ):
-                                page_retry_count += 1
-                                retry_delay = (
-                                    2**page_retry_count
-                                )  # Exponential backoff: 2s, 4s
-                                print(
-                                    f"Page retry {page_retry_count}/{max_page_retries} for offset {offset}, waiting {retry_delay}s..."
-                                )
-                                await asyncio.sleep(retry_delay)
-                                continue
-                            else:
-                                break  # Don't retry or max retries reached
-
-                    except Exception as e:
-                        # Network or other exception
-                        if page_retry_count < max_page_retries:
-                            page_retry_count += 1
-                            retry_delay = 2**page_retry_count
+                    if api_result["success"]:
+                        break  # Success, exit retry loop
+                    else:
+                        # API returned error, check if we should retry
+                        error_msg = api_result.get("error", "")
+                        if (
+                            retry_count < max_retries
+                            and ProductCacheService._should_retry_error(error_msg)
+                        ):
+                            retry_count += 1
+                            retry_delay = (
+                                2**retry_count
+                            )  # Exponential backoff: 2s, 4s, 8s
                             print(
-                                f"Network error retry {page_retry_count}/{max_page_retries} for offset {offset}: {str(e)}"
+                                f"API retry {retry_count}/{max_retries}, waiting {retry_delay}s... Error: {error_msg}"
                             )
                             await asyncio.sleep(retry_delay)
                             continue
                         else:
-                            # Create error result for final failure
-                            api_result = {
-                                "success": False,
-                                "error": f"Network error after {max_page_retries} retries: {str(e)}",
-                            }
-                            break
+                            break  # Don't retry or max retries reached
 
-                total_api_calls += 1
-
-                # Check final result after all retries
-                if not api_result["success"]:
-                    # Update sync log with partial success info
-                    await ProductCacheService._update_sync_log(
-                        session,
-                        sync_log_id,
-                        "failed",
-                        len(all_products),
-                        f"Failed at offset {offset} after retries: {api_result.get('error', 'Unknown error')}",
-                    )
-
-                    # If we have some products, return partial success
-                    if all_products:
-                        return {
-                            "success": True,
-                            "data": {
-                                "products": all_products,
-                                "total": len(all_products),
-                                "cached_count": len(all_products),
-                            },
-                            "warning": f"Partial sync completed. Failed at offset {offset}: {api_result.get('error')}",
-                        }
+                except Exception as e:
+                    # Network or other exception
+                    if retry_count < max_retries:
+                        retry_count += 1
+                        retry_delay = 2**retry_count
+                        print(
+                            f"Network error retry {retry_count}/{max_retries}: {str(e)}"
+                        )
+                        await asyncio.sleep(retry_delay)
+                        continue
                     else:
-                        # No products at all, return error
-                        return api_result
+                        # Create error result for final failure
+                        api_result = {
+                            "success": False,
+                            "error": f"Network error after {max_retries} retries: {str(e)}",
+                        }
+                        break
 
-                # Get products from this page
-                page_products = api_result["data"].get("products", [])
+            # Check final result after all retries
+            if not api_result["success"]:
+                # Update sync log with failure
+                await ProductCacheService._update_sync_log(
+                    session,
+                    sync_log_id,
+                    "failed",
+                    0,
+                    f"Failed to fetch products: {api_result.get('error', 'Unknown error')}",
+                )
+                return api_result
 
-                if not page_products:
-                    # No more products, break the loop
-                    break
-
-                # Add products to our collection
-                all_products.extend(page_products)
-
-                # Check if we've reached the requested limit
-                if len(all_products) >= limit:
-                    # Trim to exact limit if we exceeded it
-                    all_products = all_products[:limit]
-                    break
-
-                # If we got fewer products than requested, this is the last page
-                if len(page_products) < api_limit:
-                    break
-
-                # Move to next page
-                offset += api_limit
-
-            # Use all_products instead of api_result["data"].get("products", [])
-            products = all_products
+            # Get all products from the single API call
+            products = api_result["data"].get("products", [])
 
             if not products:
                 # Update sync log - no products found
@@ -362,6 +326,11 @@ class ProductCacheService:
                     "cached_count": cached_count,
                 },
                 "message": f"Successfully synced {cached_count} products",
+                "warning": (
+                    "⚠️ WB API限制：由于WB API分页功能故障，最多只能获取100个产品"
+                    if len(products) == 100
+                    else None
+                ),
             }
 
         except Exception as e:

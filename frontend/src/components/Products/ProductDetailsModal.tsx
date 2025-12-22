@@ -392,13 +392,25 @@ export function ProductDetailsModal({
                 </div>
               </div>
 
+              {/* Product Description */}
+              {product.description && (
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                    Product Description
+                  </h4>
+                  <div className="text-gray-700 leading-relaxed whitespace-pre-line max-h-48 overflow-y-auto">
+                    {product.description}
+                  </div>
+                </div>
+              )}
+
               {/* Dimensions */}
               {product.dimensions && (
                 <div className="bg-amber-50 rounded-xl p-4">
                   <h4 className="text-lg font-semibold text-gray-900 mb-3">
                     Dimensions
                   </h4>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="text-center">
                       <div className="text-2xl font-bold text-amber-600">
                         {product.dimensions.length}
@@ -417,6 +429,12 @@ export function ProductDetailsModal({
                       </div>
                       <div className="text-sm text-gray-600">Height (cm)</div>
                     </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-amber-600">
+                        {product.dimensions.weightBrutto}
+                      </div>
+                      <div className="text-sm text-gray-600">Weight (kg)</div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -433,15 +451,33 @@ export function ProductDetailsModal({
                         (char: any, index: number) => (
                           <div
                             key={index}
-                            className="bg-white rounded-lg p-3 border border-purple-100"
+                            className="bg-white rounded-lg p-4 border border-purple-100"
                           >
-                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                              <span className="font-medium text-gray-900 mb-1 sm:mb-0">
+                            <div className="flex flex-col space-y-2">
+                              <div className="font-medium text-gray-900 text-sm">
                                 {char.name}
-                              </span>
-                              <span className="text-gray-700 bg-gray-100 px-2 py-1 rounded text-sm">
-                                {char.value}
-                              </span>
+                              </div>
+                              {(() => {
+                                const value = Array.isArray(char.value) ? char.value.join(', ') : char.value;
+                                const isEmpty = !value || value.toString().trim() === '';
+                                
+                                return (
+                                  <div className={`px-3 py-2 rounded-lg text-sm leading-relaxed ${
+                                    isEmpty 
+                                      ? 'bg-red-50 border border-red-200 text-red-600' 
+                                      : 'text-gray-700 bg-gray-50'
+                                  }`}>
+                                    {isEmpty ? (
+                                      <div className="flex items-center space-x-2">
+                                        <span className="text-red-500">⚠️</span>
+                                        <span className="italic">未填写 - 需要运营人员补充</span>
+                                      </div>
+                                    ) : (
+                                      value
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
                         )
