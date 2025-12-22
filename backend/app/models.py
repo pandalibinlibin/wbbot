@@ -200,7 +200,7 @@ class WBProductCacheBase(SQLModel):
     """Base model for WB product cache with shared fields"""
 
     token_id: uuid.UUID = Field(foreign_key="wb_token.id", index=True)
-    wb_product_id: int = Field(index=True)  # WB product ID for fast lookup
+    wb_product_id: str = Field(index=True)  # WB product ID for fast lookup
     product_data: dict = Field(
         default_factory=dict, sa_column=Column(JSON)
     )  # Complete product JSON

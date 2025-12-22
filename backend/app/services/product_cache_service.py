@@ -50,7 +50,7 @@ class ProductCacheService:
             else:
                 # Cache is invalid or force refresh, sync from WB API
                 sync_result = await ProductCacheService._sync_products_from_api(
-                    session, token_id
+                    session, token_id, limit
                 )
                 if sync_result["success"]:
                     # Return newly cached data
@@ -167,7 +167,7 @@ class ProductCacheService:
 
     @staticmethod
     async def _sync_products_from_api(
-        session: Session, token_id: str
+        session: Session, token_id: str, limit: int = 100
     ) -> Dict[str, Any]:
         """Sync products from WB API and update cache"""
         sync_log_id = None
@@ -186,7 +186,7 @@ class ProductCacheService:
             # Fetch ALL products from WB API using pagination
             all_products = []
             offset = 0
-            limit = 1000
+            api_limit = min(limit, 100)
             total_api_calls = 0
             max_api_calls = 10  # Safety limit to prevent infinite loops
 
@@ -201,7 +201,7 @@ class ProductCacheService:
                         api_result = await ProductService.get_products_by_token_id(
                             session=session,
                             token_id=token_id,
-                            limit=limit,
+                            limit=api_limit,
                             offset=offset,
                         )
 
@@ -282,12 +282,18 @@ class ProductCacheService:
                 # Add products to our collection
                 all_products.extend(page_products)
 
+                # Check if we've reached the requested limit
+                if len(all_products) >= limit:
+                    # Trim to exact limit if we exceeded it
+                    all_products = all_products[:limit]
+                    break
+
                 # If we got fewer products than requested, this is the last page
-                if len(page_products) < limit:
+                if len(page_products) < api_limit:
                     break
 
                 # Move to next page
-                offset += limit
+                offset += api_limit
 
             # Use all_products instead of api_result["data"].get("products", [])
             products = all_products
@@ -322,7 +328,7 @@ class ProductCacheService:
                     # Create cache entry
                     cache_entry = WBProductCacheCreate(
                         token_id=uuid.UUID(token_id),
-                        wb_product_id=int(wb_product_id),
+                        wb_product_id=wb_product_id,
                         product_data=product,
                         last_updated=current_time,
                         cache_version=1,
