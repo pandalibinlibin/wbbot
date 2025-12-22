@@ -414,13 +414,24 @@ function ProductsPage() {
                       {product.photos && product.photos.length > 0 ? (
                         <img
                           className="h-16 w-16 rounded-lg object-cover"
-                          src={product.photos[0].big}
+                          src={
+                            product.photos[0].c516x688 ||
+                            product.photos[0].c246x328 ||
+                            product.photos[0].big ||
+                            ""
+                          }
                           alt={product.title}
                           onError={(e) => {
-                            e.currentTarget.src =
-                              product.photos[0].c516x688 ||
-                              product.photos[0].c246x328 ||
-                              "";
+                            // Fallback to lower resolution if high-res fails
+                            const currentSrc = e.currentTarget.src;
+                            if (currentSrc.includes("c516x688")) {
+                              e.currentTarget.src =
+                                product.photos[0].c246x328 ||
+                                product.photos[0].big ||
+                                "";
+                            } else if (currentSrc.includes("c246x328")) {
+                              e.currentTarget.src = product.photos[0].big || "";
+                            }
                           }}
                         />
                       ) : (
