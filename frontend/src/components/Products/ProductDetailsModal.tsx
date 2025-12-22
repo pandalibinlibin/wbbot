@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { VideoPlayer } from "./VideoPlayer";
 
 interface ProductDetailsModalProps {
   product: any;
@@ -13,6 +14,7 @@ export function ProductDetailsModal({
 }: ProductDetailsModalProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isVideoDownloading, setIsVideoDownloading] = useState(false);
 
   if (!isOpen || !product) return null;
 
@@ -63,6 +65,55 @@ export function ProductDetailsModal({
       console.error('❌ Batch download failed:', error);
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  // 下载视频
+  const handleVideoDownload = async (videoUrl: string, productTitle: string) => {
+    if (!videoUrl) return;
+    
+    setIsVideoDownloading(true);
+    
+    try {
+      // 对于 HLS 视频 (.m3u8)，我们需要特殊处理
+      if (videoUrl.includes('.m3u8')) {
+        // 对于 HLS 流，我们直接打开链接让用户手动下载
+        // 因为 HLS 需要专门的下载工具
+        const link = document.createElement('a');
+        link.href = videoUrl;
+        link.target = '_blank';
+        link.download = `${productTitle}_video.m3u8`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log('✅ Video link opened for download');
+      } else {
+        // 对于普通视频文件，直接下载
+        const response = await fetch(videoUrl);
+        const blob = await response.blob();
+        
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // 生成文件名
+        const fileExtension = videoUrl.split('.').pop()?.split('?')[0] || 'mp4';
+        link.download = `${productTitle}_video.${fileExtension}`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        window.URL.revokeObjectURL(url);
+        console.log('✅ Video downloaded successfully');
+      }
+    } catch (error) {
+      console.error('❌ Video download failed:', error);
+      // 如果下载失败，至少打开链接
+      window.open(videoUrl, '_blank');
+    } finally {
+      setIsVideoDownloading(false);
     }
   };
 
@@ -263,11 +314,28 @@ export function ProductDetailsModal({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
                     <p className="text-gray-500 text-sm">No images available</p>
                   </div>
+                </div>
+              )}
+
+              {/* Video Section */}
+              {product.video && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-3 text-gray-800">Product Video</h3>
+                  <VideoPlayer
+                    videoUrl={product.video}
+                    title={product.title}
+                    onDownload={() => handleVideoDownload(product.video, product.title)}
+                  />
+                  {isVideoDownloading && (
+                    <div className="mt-2 text-center">
+                      <span className="text-sm text-blue-600">正在准备视频下载...</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
