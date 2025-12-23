@@ -10,6 +10,9 @@ class WBAPIClient:
     # Base URL for WB Common API (Seller Information, News, etc.)
     BASE_URL = "https://common-api.wildberries.ru"
 
+    # Base URL for WB Content API (Product characteristics, etc.)
+    CONTENT_API_BASE_URL = "https://content-api.wildberries.ru"
+
     def __init__(self, token: str, timeout: float = 60.0):
         """
         Initialize WB API client.
@@ -205,6 +208,42 @@ class WBAPIClient:
                     },
                 )
 
+                if response.status_code == 200:
+                    return {"success": True, "data": response.json(), "error": None}
+                else:
+                    return {
+                        "success": False,
+                        "data": None,
+                        "error": f"HTTP {response.status_code}: {response.text}",
+                    }
+
+        except httpx.TimeoutException:
+            return {"success": False, "data": None, "error": "Request timeout"}
+
+        except Exception as e:
+            return {"success": False, "data": None, "error": str(e)}
+
+    async def get_subject_characteristics(self, subject_id: int) -> dict[str, Any]:
+        """
+        Get all characteristics for a specific subject from WB Content API.
+
+        Args:
+            subject_id: Subject ID to get characteristics for
+
+        Returns:
+            dict with characteristics data:
+            {
+                "success": bool,
+                "data": list of characteristics with popular fields,
+                "error": str | None
+            }
+        """
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(
+                    f"{self.CONTENT_API_BASE_URL}/content/v2/object/charcs/{subject_id}",
+                    headers=self.headers,
+                )
                 if response.status_code == 200:
                     return {"success": True, "data": response.json(), "error": None}
                 else:

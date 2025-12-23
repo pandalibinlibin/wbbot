@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { VideoPlayer } from "./VideoPlayer";
+import { CompleteCharacteristics } from "./CompleteCharacteristics";
 
 interface ProductDetailsModalProps {
   product: any;
   isOpen: boolean;
   onClose: () => void;
+  tokenId?: string;
 }
 
 export function ProductDetailsModal({
   product,
   isOpen,
   onClose,
+  tokenId,
 }: ProductDetailsModalProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -21,97 +24,103 @@ export function ProductDetailsModal({
   // 批量下载所有图片
   const handleBatchDownload = async () => {
     if (!product.photos || product.photos.length === 0) return;
-    
+
     setIsDownloading(true);
-    
+
     try {
       // 创建一个临时的下载容器
-      const downloadPromises = product.photos.map(async (photo: any, index: number) => {
-        const imageUrl = photo.big || photo.c516x688 || photo.c246x328;
-        if (!imageUrl) return;
+      const downloadPromises = product.photos.map(
+        async (photo: any, index: number) => {
+          const imageUrl = photo.big || photo.c516x688 || photo.c246x328;
+          if (!imageUrl) return;
 
-        try {
-          // 获取图片数据
-          const response = await fetch(imageUrl);
-          const blob = await response.blob();
-          
-          // 创建下载链接
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          
-          // 生成文件名
-          const fileExtension = imageUrl.split('.').pop()?.split('?')[0] || 'jpg';
-          link.download = `${product.title}_image_${index + 1}.${fileExtension}`;
-          
-          // 触发下载
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          // 清理URL对象
-          window.URL.revokeObjectURL(url);
-          
-          // 添加小延迟避免浏览器阻止多个下载
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (error) {
-          console.error(`Failed to download image ${index + 1}:`, error);
+          try {
+            // 获取图片数据
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+
+            // 创建下载链接
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+
+            // 生成文件名
+            const fileExtension =
+              imageUrl.split(".").pop()?.split("?")[0] || "jpg";
+            link.download = `${product.title}_image_${index + 1}.${fileExtension}`;
+
+            // 触发下载
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // 清理URL对象
+            window.URL.revokeObjectURL(url);
+
+            // 添加小延迟避免浏览器阻止多个下载
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          } catch (error) {
+            console.error(`Failed to download image ${index + 1}:`, error);
+          }
         }
-      });
+      );
 
       await Promise.all(downloadPromises);
-      console.log('✅ All images downloaded successfully');
+      console.log("✅ All images downloaded successfully");
     } catch (error) {
-      console.error('❌ Batch download failed:', error);
+      console.error("❌ Batch download failed:", error);
     } finally {
       setIsDownloading(false);
     }
   };
 
   // 下载视频
-  const handleVideoDownload = async (videoUrl: string, productTitle: string) => {
+  const handleVideoDownload = async (
+    videoUrl: string,
+    productTitle: string
+  ) => {
     if (!videoUrl) return;
-    
+
     setIsVideoDownloading(true);
-    
+
     try {
       // 对于 HLS 视频 (.m3u8)，我们需要特殊处理
-      if (videoUrl.includes('.m3u8')) {
+      if (videoUrl.includes(".m3u8")) {
         // 对于 HLS 流，我们直接打开链接让用户手动下载
         // 因为 HLS 需要专门的下载工具
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = videoUrl;
-        link.target = '_blank';
+        link.target = "_blank";
         link.download = `${productTitle}_video.m3u8`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
-        console.log('✅ Video link opened for download');
+
+        console.log("✅ Video link opened for download");
       } else {
         // 对于普通视频文件，直接下载
         const response = await fetch(videoUrl);
         const blob = await response.blob();
-        
+
         const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = url;
-        
+
         // 生成文件名
-        const fileExtension = videoUrl.split('.').pop()?.split('?')[0] || 'mp4';
+        const fileExtension = videoUrl.split(".").pop()?.split("?")[0] || "mp4";
         link.download = `${productTitle}_video.${fileExtension}`;
-        
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         window.URL.revokeObjectURL(url);
-        console.log('✅ Video downloaded successfully');
+        console.log("✅ Video downloaded successfully");
       }
     } catch (error) {
-      console.error('❌ Video download failed:', error);
+      console.error("❌ Video download failed:", error);
       // 如果下载失败，至少打开链接
-      window.open(videoUrl, '_blank');
+      window.open(videoUrl, "_blank");
     } finally {
       setIsVideoDownloading(false);
     }
@@ -277,25 +286,52 @@ export function ProductDetailsModal({
                       onClick={handleBatchDownload}
                       disabled={isDownloading}
                       className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                        isDownloading 
-                          ? 'bg-gray-400 cursor-not-allowed' 
-                          : 'bg-green-600 hover:bg-green-700'
+                        isDownloading
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-green-600 hover:bg-green-700"
                       } text-white`}
                     >
                       {isDownloading ? (
                         <>
-                          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <svg
+                            className="w-5 h-5 animate-spin"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
                           </svg>
                           <span>Downloading...</span>
                         </>
                       ) : (
                         <>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
                           </svg>
-                          <span>Download All Images ({product.photos.length})</span>
+                          <span>
+                            Download All Images ({product.photos.length})
+                          </span>
                         </>
                       )}
                     </button>
@@ -325,15 +361,21 @@ export function ProductDetailsModal({
               {/* Video Section */}
               {product.video && (
                 <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-3 text-gray-800">Product Video</h3>
+                  <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                    Product Video
+                  </h3>
                   <VideoPlayer
                     videoUrl={product.video}
                     title={product.title}
-                    onDownload={() => handleVideoDownload(product.video, product.title)}
+                    onDownload={() =>
+                      handleVideoDownload(product.video, product.title)
+                    }
                   />
                   {isVideoDownloading && (
                     <div className="mt-2 text-center">
-                      <span className="text-sm text-blue-600">正在准备视频下载...</span>
+                      <span className="text-sm text-blue-600">
+                        正在准备视频下载...
+                      </span>
                     </div>
                   )}
                 </div>
@@ -439,52 +481,10 @@ export function ProductDetailsModal({
                 </div>
               )}
 
-              {/* Characteristics */}
-              {product.characteristics &&
-                product.characteristics.length > 0 && (
-                  <div className="bg-purple-50 rounded-xl p-4">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-3">
-                      Characteristics
-                    </h4>
-                    <div className="space-y-3 max-h-64 overflow-y-auto">
-                      {product.characteristics.map(
-                        (char: any, index: number) => (
-                          <div
-                            key={index}
-                            className="bg-white rounded-lg p-4 border border-purple-100"
-                          >
-                            <div className="flex flex-col space-y-2">
-                              <div className="font-medium text-gray-900 text-sm">
-                                {char.name}
-                              </div>
-                              {(() => {
-                                const value = Array.isArray(char.value) ? char.value.join(', ') : char.value;
-                                const isEmpty = !value || value.toString().trim() === '';
-                                
-                                return (
-                                  <div className={`px-3 py-2 rounded-lg text-sm leading-relaxed ${
-                                    isEmpty 
-                                      ? 'bg-red-50 border border-red-200 text-red-600' 
-                                      : 'text-gray-700 bg-gray-50'
-                                  }`}>
-                                    {isEmpty ? (
-                                      <div className="flex items-center space-x-2">
-                                        <span className="text-red-500">⚠️</span>
-                                        <span className="italic">未填写 - 需要运营人员补充</span>
-                                      </div>
-                                    ) : (
-                                      value
-                                    )}
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                )}
+              {/* Complete Characteristics */}
+              {tokenId && (
+                <CompleteCharacteristics product={product} tokenId={tokenId} />
+              )}
 
               {/* Competitor Analysis */}
               <div className="bg-blue-50 rounded-xl p-4">

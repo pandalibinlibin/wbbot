@@ -11,6 +11,9 @@ from app.api.deps import (
 from app.services.product_service import ProductService
 
 from app.services.product_cache_service import ProductCacheService
+from app.services.subject_characteristics_cache_service import (
+    SubjectCharacteristicsCacheService,
+)
 
 router = APIRouter()
 
@@ -228,4 +231,124 @@ async def clear_expired_cache(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to clear expired cache: {str(e)}"
+        )
+
+
+@router.get("/subject/{subject_id}/characteristics", response_model=dict[str, Any])
+async def get_subject_characteristics(
+    *,
+    session: Session = Depends(get_db),
+    current_user: Any = Depends(get_current_active_superuser),
+    subject_id: int,
+    token_id: str = Query(..., description="WB Token ID for API authentication"),
+    force_refresh: bool = Query(False, description="Force refresh from WB API"),
+) -> Any:
+    """
+    Get all characteristics for a specific subject from WB Content API with intelligent caching.
+
+    This endpoint returns complete characteristics list for a subject including:
+    - All possible characteristics (not just filled ones)
+    - Popular field indicators
+    - Required field markers
+    - Cached data when available (7-day TTL)
+
+    Args:
+        subject_id: WB subject ID to get characteristics for
+        token_id: WB Token ID for API authentication (from currently selected shop)
+        force_refresh: Force refresh from WB API even if cache is valid
+    """
+    try:
+        result = await SubjectCharacteristicsCacheService.get_subject_characteristics(
+            session=session,
+            token_id=token_id,
+            subject_id=subject_id,
+            force_refresh=force_refresh,
+        )
+
+        if not result["success"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Failed to get subject characteristics: {result['error']}",
+            )
+
+        return {
+            "success": True,
+            "data": result["data"],
+            "message": "Subject characteristics retrieved successfully",
+            "from_cache": result.get("from_cache", False),
+            "cached_at": result.get("cached_at"),
+            "fetched_at": result.get("fetched_at"),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get subject characteristics: {str(e)}"
+        )
+
+
+@router.delete(
+    "/subject/{subject_id}/characteristics/cache", response_model=dict[str, Any]
+)
+async def invalidate_subject_characteristics_cache(
+    *,
+    session: Session = Depends(get_db),
+    current_user: Any = Depends(get_current_active_superuser),
+    subject_id: int,
+) -> Any:
+    """
+    Manually invalidate cache for a specific subject's characteristics.
+
+    This is useful when you know the subject characteristics have been updated
+    and you want to force a refresh from WB API.
+    """
+    try:
+        result = await SubjectCharacteristicsCacheService.invalidate_cache(
+            session=session, subject_id=subject_id
+        )
+
+        return {
+            "success": result["success"],
+            "message": result.get("message", result.get("error")),
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to invalidate cache: {str(e)}"
+        )
+
+
+@router.get("/characteristics/cache/stats", response_model=dict[str, Any])
+async def get_characteristics_cache_stats(
+    *,
+    session: Session = Depends(get_db),
+    current_user: Any = Depends(get_current_active_superuser),
+) -> Any:
+    """
+    Get statistics about the subject characteristics cache.
+
+    Returns information about:
+    - Total cached subjects
+    - Expired entries
+    - Valid entries
+    - Cache configuration
+    """
+    try:
+        result = await SubjectCharacteristicsCacheService.get_cache_stats(
+            session=session
+        )
+
+        if not result["success"]:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get cache stats: {result['error']}"
+            )
+
+        return {
+            "success": True,
+            "data": result["data"],
+            "message": "Cache statistics retrieved successfully",
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get cache statistics: {str(e)}"
         )

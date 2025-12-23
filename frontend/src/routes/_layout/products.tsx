@@ -57,15 +57,12 @@ function ProductsPage() {
 
   // 获取产品数据
   useEffect(() => {
-    console.log("urlShopId:", urlShopId, "type:", typeof urlShopId);
-
     if (
       !urlShopId ||
       urlShopId.trim() === "" ||
       urlShopId === "undefined" ||
       urlShopId === "null"
     ) {
-      console.log("No valid shop ID, showing shop selection prompt");
       setLoading(false);
       setError(null);
       return;
@@ -88,7 +85,6 @@ function ProductsPage() {
             localStorage.getItem("token");
           if (token) {
             headers["Authorization"] = `Bearer ${token}`;
-            console.log("Using token from localStorage");
           } else {
             console.warn("No token found in localStorage");
           }
@@ -99,9 +95,6 @@ function ProductsPage() {
         const encodedShopId = encodeURIComponent(urlShopId);
         const url = `http://localhost:8000/api/v1/products/cached/${encodedShopId}?limit=${limit}&offset=${offset}`;
 
-        console.log("Fetching products from:", url);
-        console.log("Request headers:", headers);
-
         const response = await fetch(url, {
           method: "GET",
           headers,
@@ -111,40 +104,15 @@ function ProductsPage() {
           throw new Error(`Network error: ${error.message}`);
         });
 
-        console.log("Response received!");
-        console.log("Response status:", response.status, response.statusText);
-        console.log(
-          "Response headers:",
-          Object.fromEntries(response.headers.entries())
-        );
-
         if (!response.ok) {
           const text = await response.text();
-          console.error("Response text:", text.substring(0, 200) + "...");
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         const result = await response.json();
-        console.log("JSON parsed successfully");
-        console.log("Result structure:", {
-          success: result.success,
-          hasData: !!result.data,
-          dataKeys: result.data ? Object.keys(result.data) : [],
-          productsCount: result.data?.products?.length,
-          total: result.data?.total,
-          cached_count: result.data?.cached_count,
-          cursor: result.data?.cursor,
-        });
-        console.log("Full backend response data:", result.data);
 
         if (result.success) {
           const data = result.data as any;
-          console.log(
-            "✅ API Success - Products found:",
-            data.products?.length || 0
-          );
-          console.log("Total products available:", data.total);
-          console.log("Setting products state...");
 
           // Backend now handles sorting by updatedAt, just set the products directly
           setProducts(data.products || []);
@@ -156,38 +124,22 @@ function ProductsPage() {
             data.cursor?.total ||
             data.products?.length ||
             0;
-          console.log("Setting totalProducts to:", totalCount, "from data:", {
-            cached_count: data.cached_count,
-            total: data.total,
-            cursor_total: data.cursor?.total,
-            products_length: data.products?.length,
-          });
           setTotalProducts(totalCount);
-          console.log("✅ State updated successfully");
 
           // 检查缓存状态并自动同步
           if (!data.products || data.products.length === 0) {
-            console.log(
-              "🔄 No cached products found, automatically syncing all products..."
-            );
-            setSyncStatus("🔄 首次加载，正在同步所有产品...");
+            setSyncStatus("首次加载，正在同步所有产品...");
             await triggerSync();
           } else if (
             data.total &&
             data.cached_count &&
             data.cached_count < data.total
           ) {
-            console.log(
-              `🔄 Only ${data.cached_count} of ${data.total} products are cached. Auto-syncing all products...`
-            );
             setSyncStatus(
-              `🔄 发现 ${data.total - data.cached_count} 个新产品，正在同步...`
+              `发现 ${data.total - data.cached_count} 个新产品，正在同步...`
             );
             await triggerSync();
           } else {
-            console.log(
-              `✅ All ${data.products.length} products are cached and up to date.`
-            );
           }
         } else {
           console.error("API Error:", result);
@@ -210,13 +162,12 @@ function ProductsPage() {
   const triggerSync = async () => {
     // 防止重复同步
     if (isSyncing) {
-      console.log("⚠️ Sync already in progress, skipping...");
       return;
     }
 
     try {
       setIsSyncing(true);
-      setSyncStatus("🔄 正在同步所有产品...");
+      setSyncStatus("正在同步所有产品...");
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -229,7 +180,6 @@ function ProductsPage() {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      console.log("🔄 Starting full product sync...");
       const response = await fetch(
         `http://localhost:8000/api/v1/products/sync/${urlShopId}`,
         {
@@ -242,10 +192,9 @@ function ProductsPage() {
 
       if (result.success) {
         const syncedCount = result.data?.cached_count || 0;
-        console.log("✅ Products synced successfully:", syncedCount);
 
         // Check for WB API limitation warning
-        let statusMessage = `✅ 成功同步 ${syncedCount} 个产品`;
+        let statusMessage = `成功同步 ${syncedCount} 个产品`;
         if (result.warning) {
           statusMessage += ` (${result.warning})`;
         }
@@ -272,13 +221,13 @@ function ProductsPage() {
 
         await fetchProducts();
       } else {
-        console.error("❌ Sync failed:", result.message);
-        setSyncStatus(`❌ 同步失败: ${result.message}`);
+        console.error("Sync failed:", result.message);
+        setSyncStatus(`同步失败: ${result.message}`);
       }
     } catch (error) {
-      console.error("❌ Sync error:", error);
+      console.error("Sync error:", error);
       setSyncStatus(
-        `❌ 同步错误: ${error instanceof Error ? error.message : String(error)}`
+        `同步错误: ${error instanceof Error ? error.message : String(error)}`
       );
     } finally {
       setIsSyncing(false);
@@ -304,7 +253,6 @@ function ProductsPage() {
       urlShopId === "null") &&
     !loading
   ) {
-    console.log("Showing shop selection prompt");
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -320,17 +268,6 @@ function ProductsPage() {
       </div>
     );
   }
-
-  console.log("Render state:", {
-    loading,
-    error: !!error,
-    productsLength: products.length,
-    totalProducts,
-    totalPages,
-    currentPage,
-    shouldShowTable: !loading && !error && products.length > 0,
-    shouldShowPagination: totalPages > 1,
-  });
 
   return (
     <div className="space-y-6">
@@ -554,6 +491,7 @@ function ProductsPage() {
           product={selectedProduct}
           isOpen={showDetailsModal}
           onClose={() => setShowDetailsModal(false)}
+          tokenId={urlShopId}
         />
       )}
     </div>

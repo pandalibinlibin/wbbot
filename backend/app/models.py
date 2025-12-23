@@ -240,6 +240,52 @@ class WBProductCachePublic(WBProductCacheBase):
     created_at: datetime
 
 
+# Subject Characteristics Cache Models - for storing WB subject characteristics data globally
+class WBSubjectCharacteristicsCacheBase(SQLModel):
+    """Base model for WB subject characteristics cache with shared fields"""
+
+    subject_id: int = Field(
+        unique=True, index=True
+    )  # WB subject ID, unique across platform
+    characteristics_data: dict = Field(
+        default_factory=dict, sa_column=Column(JSON)
+    )  # Complete characteristics JSON from WB Content API
+    last_updated: datetime = Field(default_factory=datetime.utcnow, index=True)
+    cache_version: int = Field(default=1)  # For cache invalidation strategy
+    is_active: bool = Field(default=True, index=True)
+
+
+class WBSubjectCharacteristicsCache(WBSubjectCharacteristicsCacheBase, table=True):
+    """Subject characteristics cache table for storing WB subject characteristics data globally"""
+
+    __tablename__ = "wb_subject_characteristics_cache"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class WBSubjectCharacteristicsCacheCreate(WBSubjectCharacteristicsCacheBase):
+    """Model for creating subject characteristics cache entries"""
+
+    pass
+
+
+class WBSubjectCharacteristicsCacheUpdate(SQLModel):
+    """Model for updating subject characteristics cache entries"""
+
+    characteristics_data: dict | None = None
+    last_updated: datetime | None = None
+    cache_version: int | None = None
+    is_active: bool | None = None
+
+
+class WBSubjectCharacteristicsCachePublic(WBSubjectCharacteristicsCacheBase):
+    """Public model for subject characteristics cache (includes ID and timestamp)"""
+
+    id: uuid.UUID
+    created_at: datetime
+
+
 # Cache Sync Log Models - for tracking synchronization status
 class CacheSyncLogBase(SQLModel):
     """Base model for cache synchronization logs"""
